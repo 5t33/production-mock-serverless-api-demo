@@ -2,17 +2,18 @@
 service: lambda-api-demo
 plugins:
   - serverless-offline
-  - serverless-plugin-tracing
+  
 provider:
   name: aws
   runtime: nodejs12.x
   stage: ${opt:stage}
   region: us-east-2
-
+  tracing:
+    lambda: true
+    
 functions:
   DemoLambda:
     role: DemoLambdaRole
-    tracing: true
     handler: index.handler
     events:
       - http:
