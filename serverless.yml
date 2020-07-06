@@ -30,7 +30,7 @@ resources:
     DemoLambdaRole:
       Type: AWS::IAM::Role
       Properties:
-        Path: /${opt:stage}/demos/lambda-api-demo/service-roles
+        Path: /${opt:stage}/demos/lambdaApiDemo/serviceRoles/
         RoleName: DemoLambdaRole
         AssumeRolePolicyDocument:
           Version: '2012-10-17'
