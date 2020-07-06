@@ -16,16 +16,14 @@ class ApiError extends Error {
 
 module.exports.ApiError = ApiError
 
-const formatApiError = (error) => {
-  return ({
-    isBase64Encoded: false,
-    statusCode: error.statusCode,
-    headers: {
-      "Content-Type": typeof body === "string" ? "text/html" : "application/json",
-    },
-    body: typeof error.body === "string" ? error.body : JSON.stringify(error.body)
-  });
-}
+const formatApiError = (error) => ({
+  isBase64Encoded: false,
+  statusCode: error.statusCode,
+  headers: {
+    "Content-Type": typeof error.body === "string" ? "text/html" : "application/json",
+  },
+  body: typeof error.body === "string" ? error.body : JSON.stringify(error.body)
+});
  
 module.exports.handleError = (logger, error ) => { 
   if (error instanceof ApiError) {
