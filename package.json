@@ -1,0 +1,20 @@
+{
+  "name": "test-xray-stack-trace",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "sls-offline": "AWS_XRAY_CONTEXT_MISSING=LOG_ERROR sls offline --stage staging",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-xray-sdk": "^3.1.0",
+    "pino": "^6.3.2"
+  },
+  "devDependencies": {
+    "serverless-offline": "^6.4.0",
+    "serverless-plugin-tracing": "^2.0.0"
+  }
+}
