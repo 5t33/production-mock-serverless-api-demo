@@ -40,27 +40,27 @@ resources:
                 Service:
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
-      Policies:
-        - PolicyName: DemoLambdaPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - logs:CreateLogGroup
-                  - logs:CreateLogStream
-                  - logs:PutLogEvents
-                Resource:
-                  - 'Fn::Join':
-                    - ':'
-                    -
-                      - 'arn:aws:logs'
-                      - Ref: 'AWS::Region'
-                      - Ref: 'AWS::AccountId'
-                      - 'log-group:/aws/lambda/*:*:*'
-              - Effect: Allow
-                Action:
-                  - xray:PutTraceSegment
-                  - xray:PutTraceSegments
-                  - xray:PutTelemetryRecords
-                Resource: "*"
+        Policies:
+          - PolicyName: DemoLambdaPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - xray:PutTraceSegment
+                    - xray:PutTraceSegments
+                    - xray:PutTelemetryRecords
+                  Resource: "*"
