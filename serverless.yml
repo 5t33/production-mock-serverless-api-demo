@@ -10,6 +10,7 @@ provider:
   region: us-east-2
   tracing:
     lambda: true
+    apiGateway: true
     
 functions:
   DemoLambda:
