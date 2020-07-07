@@ -32,7 +32,7 @@ module.exports.handleError = (logger, error ) => {
   } else {
     logger.error("Internal Server Error: ", error);
     const response = formatApiError(new ApiError(500, "Internal Server Error"));
-    return Promise.resolve(response);
+    return Promise.reject(response);
   }
 };
 
