@@ -26,14 +26,16 @@ const formatApiError = (error) => JSON.stringify({
 });
  
 module.exports.handleError = (logger, error ) => { 
+  const oldStack = error.stack;
   if (error instanceof ApiError) {
-    const response = formatApiError(error);
+    error.message = formatApiError(error);
+    error.stack = oldStack
     return Promise.reject(response)
   } else {
-  
     logger.error("Internal Server Error: ", error);
-    const response = formatApiError(new ApiError(500, "Internal Server Error"));
-    return Promise.reject(response);
+    error.message = formatApiError(new ApiError(500, "Internal Server Error"));
+    error.stack = oldStack
+    return Promise.reject(error);
   }
 };
 

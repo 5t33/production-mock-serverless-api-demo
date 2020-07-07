@@ -16,7 +16,6 @@ functions:
   DemoLambda:
     role: DemoLambdaRole
     handler: index.handler
-    integration: lambda
     events:
       - http:
           path: /health_check
