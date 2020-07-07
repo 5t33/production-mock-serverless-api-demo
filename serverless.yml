@@ -16,16 +16,30 @@ functions:
   DemoLambda:
     role: DemoLambdaRole
     handler: index.handler
+    integration: lambda
     events:
       - http:
           path: /health_check
-          method: GET
+          method: get
+          integration: lambda  
       - http:
           path: /respond_400
-          method: POST
+          method: post
+          integration: lambda  
+          response:
+            statusCodes:
+              400:
+                pattern: '.*"statusCode":400,.*' # JSON response
+                template: $input.path("$.errorMessage") # JSON return object
       - http:
           path: /throw_error
-          method: GET
+          method: get
+          integration: lambda  
+          response:
+            statusCodes:
+              500:
+                pattern: '.*"statusCode":500,.*' # JSON response
+                template: $input.path("$.errorMessage") # JSON return object
 
 resources:
   Resources:
@@ -39,11 +53,11 @@ resources:
           Statement:
             - Effect: Allow
               Principal:
-                Service:
+                Service: 
                   - lambda.amazonaws.com
               Action: sts:AssumeRole
         Policies:
-          - PolicyName: DemoLambdaPolicy
+          - PolicyName: DemoLambdaPolicy2
             PolicyDocument:
               Version: '2012-10-17'
               Statement:

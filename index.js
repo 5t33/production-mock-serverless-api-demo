@@ -8,20 +8,19 @@ module.exports.handler = async ( event, context) => {
      requestId: context.awsRequestId,
    });
 
-  if(event.path === "/health_check" && event.httpMethod === "GET") {
+  if(event.requestPath === "/health_check" && event.method === "GET") {
     return functionThatResolves()
       .then(handleResp)
       .catch(error => handleError(logger, error))
-  } else if (event.path === "/respond_400" && event.httpMethod === "POST") {
+  } else if (event.requestPath === "/respond_400" && event.method === "POST") {
     return functionThatRejectsWith400()
       .then(handleResp)
       .catch(error => handleError(logger, error))
-  } else if(event.path === "/throw_error" && event.httpMethod === "GET") {
+  } else if(event.requestPath === "/throw_error" && event.method === "GET") {
     return functionThatRejects()
     .then(handleResp)
     .catch(error => handleError(logger, error))
   } else {
     return handleError(logger, new ApiError(404, "404 Not Found"));
   }
-
 }

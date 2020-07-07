@@ -16,23 +16,24 @@ class ApiError extends Error {
 
 module.exports.ApiError = ApiError
 
-const formatApiError = (error) => ({
+const formatApiError = (error) => JSON.stringify({
   isBase64Encoded: false,
   statusCode: error.statusCode,
   headers: {
     "Content-Type": typeof error.body === "string" ? "text/html" : "application/json",
   },
-  body: typeof error.body === "string" ? error.body : JSON.stringify(error.body)
+  body: error.body
 });
  
 module.exports.handleError = (logger, error ) => { 
   if (error instanceof ApiError) {
     const response = formatApiError(error);
-    return Promise.resolve(response)
+    return Promise.reject(response)
   } else {
+  
     logger.error("Internal Server Error: ", error);
     const response = formatApiError(new ApiError(500, "Internal Server Error"));
-    return Promise.reject(error);
+    return Promise.reject(response);
   }
 };
 
@@ -44,7 +45,7 @@ module.exports.handleResp = (
   headers: {
     "Content-Type": typeof body === "string" ? "text/html" : "application/json",
   },
-  body: JSON.stringify(body)
+  body
 });
 
  
