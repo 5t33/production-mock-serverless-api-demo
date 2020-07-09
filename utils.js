@@ -25,26 +25,30 @@ const formatApiError = (error) => ({
   body: typeof error.body === "string" ? error.body : JSON.stringify(error.body)
 });
  
-module.exports.handleError = (logger, error ) => { 
+module.exports.handleError = (segment, logger) => error => { 
   if (error instanceof ApiError) {
     const response = formatApiError(error);
+    segment.close();
     return Promise.resolve(response)
   } else {
     logger.error("Internal Server Error: ", error);
-    const response = formatApiError(new ApiError(500, "Internal Server Error"));
+    segment.close();
     return Promise.reject(error);
   }
 };
 
-module.exports.handleResp = (
+module.exports.handleResp = (segment) => (
   body
-) => ({
-  isBase64Encoded: false,
-  statusCode: 200,
-  headers: {
-    "Content-Type": typeof body === "string" ? "text/html" : "application/json",
-  },
-  body: JSON.stringify(body)
-});
+) => {
+  segment.close();
+  Promise.resolve({
+    isBase64Encoded: false,
+    statusCode: 200,
+    headers: {
+      "Content-Type": typeof body === "string" ? "text/html" : "application/json",
+    },
+    body: JSON.stringify(body)
+  });
+};
 
  
