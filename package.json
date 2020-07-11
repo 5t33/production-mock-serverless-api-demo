@@ -4,7 +4,7 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "sls-offline": "AWS_XRAY_CONTEXT_MISSING=LOG_ERROR sls offline --stage staging",
+    "sls-offline": "AWS_XRAY_CONTEXT_MISSING=LOG_ERROR sls offline --stage dev",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

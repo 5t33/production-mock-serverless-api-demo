@@ -2,7 +2,7 @@ const AWSXRay = require('aws-xray-sdk-core')
 const { ApiError } = require('./utils');
 
 module.exports.functionThatRejectsWith400 = () => 
-  AWSXRay.captureFunc.captureAsyncFunc("functionThatRejectsWith400", async subseg => {
+  AWSXRay.captureAsyncFunc("functionThatRejectsWith400", async subseg => {
     subseg.close();
     return Promise.reject(new ApiError(400, [
       "wow you messed up, huh?", 
@@ -24,7 +24,7 @@ module.exports.functionThatRejects = () =>
   });
 
 module.exports.functionThatResolves = () => 
-  AWSXRay.captureFunc.captureAsyncFunc("functionThatRejects", async subseg => {
+  AWSXRay.captureAsyncFunc("functionThatResolves", async subseg => {
     subseg.close();
-    Promise.resolve({so: "much", data: "wow"})
+    return Promise.resolve({so: "much", data: "wow"})
   });

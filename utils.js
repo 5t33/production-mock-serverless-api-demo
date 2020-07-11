@@ -41,7 +41,7 @@ module.exports.handleResp = (segment) => (
   body
 ) => {
   segment.close();
-  Promise.resolve({
+  return Promise.resolve({
     isBase64Encoded: false,
     statusCode: 200,
     headers: {
