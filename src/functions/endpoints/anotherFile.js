@@ -31,9 +31,8 @@ module.exports.functionThatResolves = () =>
   });
 
 module.exports.getUsers = async (dynamodb) => 
-  AWSXRay.captureAsyncFunc("functionThatResolves", async subseg => {
+  AWSXRay.captureAsyncFunc("getUsers", async subseg => {
     try{
-      console.log(process.env.TopicArn)
       const results = await dynamodb.scan({
         TableName: config.get("dynamodb.tableName")
       }).promise();
@@ -47,7 +46,7 @@ module.exports.getUsers = async (dynamodb) =>
   });
 
 module.exports.sendUsers = (users, sns) => {
-  return AWSXRay.captureAsyncFunc("functionThatResolves", async subseg => {
+  return AWSXRay.captureAsyncFunc("SendUsers", async subseg => {
     try {
       await Promise.all(users.Items.map(user => sns.publish({
         Message: JSON.stringify(user),
