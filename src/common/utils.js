@@ -40,7 +40,6 @@ module.exports.handleError = (segment, logger) => error => {
 module.exports.handleResp = (segment) => (
   body
 ) => {
-  console.log(body)
   segment.close();
   return Promise.resolve({
     isBase64Encoded: false,
