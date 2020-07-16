@@ -1,0 +1,12 @@
+{
+  "dynamodb": {
+    "region": "us-east-2",
+    "tableName": "DemoDynamodbTable-dev"
+  },
+  "ssm": {
+    "region": "us-east-2"
+  },
+  "sns": {
+    "region": "us-east-2"
+  }
+}

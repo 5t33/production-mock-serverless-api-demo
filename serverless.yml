@@ -2,21 +2,51 @@
 service: lambda-api-demo
 plugins:
   - serverless-offline
-  
+  - serverless-pseudo-parameters
+  - serverless-dynamodb-local
+
+custom:
+  dynamodb:
+    stages:
+      - local
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      heapInitial: 200m
+      heapMax: 1g
+      migrate: false
+      seed: false
+      convertEmptyValues: true
+      noStart: true
+      sharedDb: true
+    seed:
+     DemoTable:
+        sources:
+          - table: DemoDynamodbTable-${opt:stage}
+            sources: [./src/data/fakeUsers.json]
+      
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: ${opt:stage}
   region: us-east-2
+  timeout: 30
   tracing:
     lambda: true
     apiGateway: true
+  environment:
+    NODE_ENV: ${opt:stage}
     
 functions:
   DemoLambda:
     role: DemoLambdaRole
-    handler: index.handler
+    handler: src/functions/endpoints/index.handler
+    environment:
+      TopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:demo-sns-topic-${opt:stage}
     events:
+      - http:
+          path: /send_data
+          method: GET
       - http:
           path: /health_check
           method: GET
@@ -26,9 +56,80 @@ functions:
       - http:
           path: /throw_error
           method: GET
-
+  SQSHandlerLambda:
+    role: SQSHandlerRole
+    handler: src/functions/sqs_listener/index.handler
+    environment:
+      SlackEndpoint: 	${ssm:/demo/dev/slack_endpoint}
+    events:
+      - sqs:
+          arn: !GetAtt
+            - DemoSQSQueue
+            - Arn
+          batchSize: 5
 resources:
   Resources:
+    SnsToQueueSqsPolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "allow-sns-messages"
+              Effect: Allow
+              Principal: "*"
+              Resource: !GetAtt
+                - DemoSQSQueue
+                - Arn
+              Action: "SQS:SendMessage"
+              Condition:
+                ArnEquals:
+                  "aws:SourceArn": !Ref DemoSnsTopic
+        Queues:
+          - Ref: DemoSQSQueue
+    SQSHandlerRole:
+      Type: AWS::IAM::Role
+      Properties:
+        Path: /${opt:stage}/demos/lambdaApiDemo/serviceRoles/
+        RoleName: PullMessagesRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: PullMessagesLambdaPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource:
+                    - 'Fn::Join':
+                      - ':'
+                      -
+                        - 'arn:aws:logs'
+                        - Ref: 'AWS::Region'
+                        - Ref: 'AWS::AccountId'
+                        - 'log-group:/aws/lambda/*:*:*'
+                - Effect: Allow
+                  Action:
+                    - sqs:ReceiveMessage
+                    - sqs:DeleteMessage
+                    - sqs:GetQueueAttributes
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - xray:PutTraceSegment
+                    - xray:PutTraceSegments
+                    - xray:PutTelemetryRecords
+                  Resource: "*"
     DemoLambdaRole:
       Type: AWS::IAM::Role
       Properties:
@@ -66,3 +167,44 @@ resources:
                     - xray:PutTraceSegments
                     - xray:PutTelemetryRecords
                   Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - "dynamodb:*"
+                  Resource: arn:aws:dynamodb:${self:provider.region}:#{AWS::AccountId}:table/DemoDynamodbTable-${opt:stage}
+                - Effect: Allow
+                  Action:
+                    - "sns:Publish"
+                  Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:demo-sns-topic-${opt:stage}
+
+    DemoDynamodbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: DemoDynamodbTable-${opt:stage}
+        AttributeDefinitions:
+          - AttributeName: UserEmail
+            AttributeType: S
+          - AttributeName: DateTime
+            AttributeType: S
+        KeySchema:
+          - AttributeName: UserEmail
+            KeyType: HASH
+          - AttributeName: DateTime
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+    DemoSnsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: demo-sns-topic-${opt:stage}
+    DemoSQSQueue:
+      Type: AWS::SQS::Queue
+      Properties: 
+        QueueName: demo-sqs-queue-${opt:stage}
+    QueueSubscription:
+      Type: 'AWS::SNS::Subscription'
+      Properties:
+        TopicArn: !Ref DemoSnsTopic
+        Endpoint: !GetAtt
+          - DemoSQSQueue
+          - Arn
+        Protocol: sqs
+        RawMessageDelivery: 'true'

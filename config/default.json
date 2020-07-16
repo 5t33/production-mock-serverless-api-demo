@@ -1,0 +1,9 @@
+{
+  "dynamodb": {
+    "region": "localhost",
+    "tableName": "DemoDynamodbTable-local"
+  },
+  "ssm": {
+    "region": "us-east-2"
+  }
+}
