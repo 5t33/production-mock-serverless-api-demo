@@ -58,6 +58,7 @@ module.exports.sendUsers = (users, sns) => {
       subseg.close();
       return Promise.reject(err);
     }
+    subseg.close();
     return Promise.resolve({ message: "All done" })
   });
 } 
