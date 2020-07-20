@@ -30,6 +30,39 @@ module.exports.functionThatResolves = () =>
     return Promise.resolve({so: "much", data: "wow"})
   });
 
+
+module.exports.getUsersRDS = async (db) => 
+  AWSXRay.captureAsyncFunc("getUsers", async subseg => {
+    try{
+      const res = await db.any('select a_schema.users.id, username, country from a_schema.users join a_schema.locations on a_schema.users.id = a_schema.locations.user_id;');
+      // Formatting this to whay dynamo was returning to re-use the send data function
+      const dynamoFormat = {
+        Items: res.map(res => ({
+          login: {
+            M:{
+              username: {
+                S: res.username
+              }
+            }
+          },
+          location:{
+            M:{
+              country: {
+                S: res.country
+              }
+            }
+          }
+        }))
+      }
+      subseg.close();
+      return Promise.resolve(dynamoFormat)
+    } catch(err) {
+      subseg.addError(err);   
+      subseg.close();
+      return Promise.reject(err);
+    }
+  });
+
 module.exports.getUsers = async (dynamodb) => 
   AWSXRay.captureAsyncFunc("getUsers", async subseg => {
     try{

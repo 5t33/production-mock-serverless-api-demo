@@ -5,5 +5,12 @@
   },
   "ssm": {
     "region": "us-east-2"
+  },
+  "sns": {
+    "region": "us-east-2"
+  },
+  "rds": {
+    "dbName": "demo-db",
+    "dbPort": 5432
   }
 }

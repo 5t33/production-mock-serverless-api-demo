@@ -3,8 +3,9 @@ const { dynamodb } = require('../../common/dynamodb')
 const { sns } = require('../../common/sns');
 const Logger = require('../../common/logger');
 const { handleError, handleResp, ApiError } = require('../../common/utils');
-const { functionThatRejects, functionThatResolves, getUsers, sendUsers, functionThatRejectsWith400 } = require('./anotherFile');
+const { functionThatRejects, functionThatResolves, getUsers, getUsersRDS, sendUsers, functionThatRejectsWith400 } = require('./anotherFile');
 const logger = Logger("trace");
+const { db } = require('../../common/rds');
 
 
 module.exports.handler = async ( event, context) => {
@@ -21,6 +22,11 @@ module.exports.handler = async ( event, context) => {
         .catch(error => handleError(log, error))
     } else if(event.path === "/send_data" && event.httpMethod === "GET") {
       return getUsers(dynamodb)
+        .then(results => sendUsers(results, sns))
+        .then(handleResp(subSegment))
+        .catch(handleError(subSegment, log))
+    } else if(event.path === "/send_data_rds" && event.httpMethod === "GET") {
+      return getUsersRDS(db)
         .then(results => sendUsers(results, sns))
         .then(handleResp(subSegment))
         .catch(handleError(subSegment, log))

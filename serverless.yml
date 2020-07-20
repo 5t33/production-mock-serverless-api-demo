@@ -1,6 +1,7 @@
 
 service: lambda-api-demo
 plugins:
+  - serverless-offline-ssm
   - serverless-offline
   - serverless-pseudo-parameters
   - serverless-dynamodb-local
@@ -21,16 +22,28 @@ custom:
       noStart: true
       sharedDb: true
     seed:
-     DemoTable:
+      DemoTable:
         sources:
           - table: DemoDynamodbTable-${opt:stage}
             sources: [./src/data/fakeUsers.json]
+  serverless-offline-ssm:
+    stages:
+      - local
+    ssm:
+      '/demo/local/rds/demo-db-endpoint': 'localhost'
+      '/demo/local/rds/demo-db-name': 'test'
+      '/demo/local/rds/demo-db-username': 'notadmin'
+      '/demo/local/rds/demo-db-password': 'notpassword'
+      '/demo/local/vpc/public_subnet_a': 'pub_subnet_a'
+      '/demo/local/vpc/public_subnet_b': 'pub_subne_b'
+      '/demo/local/lambda_security_group': 'lambda_security_group'
+      '/demo/local/slack_endpoint': 'http://localhost:3001/local_webhook'
       
 provider:
   name: aws
   runtime: nodejs12.x
   region: us-east-2
-  timeout: 30
+  timeout: 06
   tracing:
     lambda: true
     apiGateway: true
@@ -41,11 +54,26 @@ functions:
   DemoLambda:
     role: DemoLambdaRole
     handler: src/functions/endpoints/index.handler
+    vpc:
+      securityGroupIds:
+        - ${ssm:/demo/${opt:stage}/lambda_security_group}
+        - ${ssm:/demo/${opt:stage}/vpc/vpc_endpoint_sns_sg}
+      subnetIds:
+        - ${ssm:/demo/${opt:stage}/vpc/private_subnet_a}
+        - ${ssm:/demo/${opt:stage}/vpc/private_subnet_b}
     environment:
       TopicArn: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:demo-sns-topic-${opt:stage}
+      DB_HOST: ${ssm:/demo/${opt:stage}/rds/demo-db-endpoint}
+      DB_PORT: 5432
+      DB_NAME: ${ssm:/demo/${opt:stage}/rds/demo-db-name}
+      DB_USER: ${ssm:/demo/${opt:stage}/rds/demo-db-username~true}
+      DB_PASS: ${ssm:/demo/${opt:stage}/rds/demo-db-password~true}
     events:
       - http:
           path: /send_data
+          method: GET
+      - http:
+          path: /send_data_rds
           method: GET
       - http:
           path: /health_check
@@ -60,7 +88,7 @@ functions:
     role: SQSHandlerRole
     handler: src/functions/sqs_listener/index.handler
     environment:
-      SlackEndpoint: 	${ssm:/demo/dev/slack_endpoint}
+      SlackEndpoint: 	${ssm:/demo/${opt:stage}/slack_endpoint}
     events:
       - sqs:
           arn: !GetAtt
@@ -175,6 +203,14 @@ resources:
                   Action:
                     - "sns:Publish"
                   Resource: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:demo-sns-topic-${opt:stage}
+                - Effect: Allow
+                  Action:
+                    - "ec2:DescribeNetworkInterfaces"
+                    - "ec2:CreateNetworkInterface"
+                    - "ec2:DeleteNetworkInterface"
+                    - "ec2:DescribeInstances"
+                    - "ec2:AttachNetworkInterface"
+                  Resource: "*"
 
     DemoDynamodbTable:
       Type: AWS::DynamoDB::Table
