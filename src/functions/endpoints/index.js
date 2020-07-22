@@ -1,4 +1,7 @@
 const AWSXRay = require('aws-xray-sdk-core')
+const express = require("express");
+const awsServerlessExpress = require('aws-serverless-express')
+const app = express();
 const { dynamodb } = require('../../common/dynamodb')
 const { sns } = require('../../common/sns');
 const Logger = require('../../common/logger');
@@ -7,6 +10,9 @@ const { functionThatRejects, functionThatResolves, getUsers, getUsersRDS, sendUs
 const logger = Logger("trace");
 const { db } = require('../../common/rds');
 
+app.get("/health_check", (req, res) => {
+  res.send(200).send("Status OK")
+})
 
 module.exports.handler = async ( event, context) => {
   const segment = AWSXRay.getSegment();

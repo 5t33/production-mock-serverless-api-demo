@@ -34,8 +34,8 @@ custom:
       '/demo/local/rds/demo-db-name': 'test'
       '/demo/local/rds/demo-db-username': 'notadmin'
       '/demo/local/rds/demo-db-password': 'notpassword'
-      '/demo/local/vpc/public_subnet_a': 'pub_subnet_a'
-      '/demo/local/vpc/public_subnet_b': 'pub_subne_b'
+      '/demo/local/vpc/private_subnet_a': 'private_subnet_a'
+      '/demo/local/vpc/private_subnet_b': 'private_subnet_b'
       '/demo/local/lambda_security_group': 'lambda_security_group'
       '/demo/local/slack_endpoint': 'http://localhost:3001/local_webhook'
       
