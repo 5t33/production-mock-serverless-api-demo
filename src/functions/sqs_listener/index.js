@@ -12,7 +12,7 @@ module.exports.handler = async ( event, context ) => {
     requestId: context.awsRequestId,
   });
   if(event.Records) {
-    log.info(event.records);
+    log.info(event.Records);
     await Promise.all(event.Records.map(async (record, indx )=> {
       const body = JSON.parse(record.body)
       return await axios.post(url, {

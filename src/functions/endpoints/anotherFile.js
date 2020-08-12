@@ -78,9 +78,10 @@ module.exports.getUsers = async (dynamodb) =>
     }
   });
 
-module.exports.sendUsers = (users, sns) => {
+module.exports.sendUsers = (logger, users, sns) => {
   return AWSXRay.captureAsyncFunc("SendUsers", async subseg => {
     try {
+      logger.info(users);
       await Promise.all(users.Items.map(user => sns.publish({
         Message: JSON.stringify(user),
         TopicArn: process.env.TopicArn

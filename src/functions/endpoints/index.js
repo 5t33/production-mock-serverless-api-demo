@@ -1,51 +1,76 @@
-const AWSXRay = require('aws-xray-sdk-core')
+const AWSXRay = require('aws-xray-sdk-core');
+const xrayExpress = require('aws-xray-sdk-express');
 const express = require("express");
-const awsServerlessExpress = require('aws-serverless-express')
+const awsServerlessExpress = require('aws-serverless-express');
+const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 const app = express();
 const { dynamodb } = require('../../common/dynamodb')
 const { sns } = require('../../common/sns');
 const Logger = require('../../common/logger');
 const { handleError, handleResp, ApiError } = require('../../common/utils');
-const { functionThatRejects, functionThatResolves, getUsers, getUsersRDS, sendUsers, functionThatRejectsWith400 } = require('./anotherFile');
+const { functionThatRejects, getUsers, getUsersRDS, sendUsers, functionThatRejectsWith400 } = require('./anotherFile');
 const logger = Logger("trace");
 const { db } = require('../../common/rds');
 
-app.get("/health_check", (req, res) => {
-  res.send(200).send("Status OK")
-})
+app.use(xrayExpress.openSegment('handler'));
+
+app.use(awsServerlessExpressMiddleware.eventContext())
+
+app.use((req, res, next) => {
+  req.logger =  logger.child({
+    requestId: req.apiGateway.context.awsRequestId,
+  });
+  next();
+});
+
+app.get("/health_check", (req, res) => 
+  AWSXRay.captureAsyncFunc('/health_check', async subSegment => {
+    subSegment.close();
+    return res.status(200).send("Status OK");
+  }));
+
+app.get("/send_data_rds", (req, res) => 
+  AWSXRay.captureAsyncFunc('/send_data_rds', async subSegment => {
+    return getUsersRDS(db)
+      .then(results => sendUsers(req.logger,results, sns))
+      .then(handleResp(subSegment, res))
+      .catch(handleError(subSegment, req, res))
+  }));
+
+app.get("/send_data", (req, res) => 
+  AWSXRay.captureAsyncFunc('/send_data', async subSegment => {
+    return getUsers(dynamodb)
+      .then(results => sendUsers(req.logger,results, sns))
+      .then(handleResp(subSegment, res))
+      .catch(handleError(subSegment, req, res))
+  }));
+
+app.post("/respond_400", (req, res) =>
+  AWSXRay.captureAsyncFunc('/respond_400', async subSegment => {
+    return functionThatRejectsWith400()
+    .then(handleResp(subSegment, res))
+    .catch(handleError(subSegment, req, res))
+  }));
+
+app.get("/throw_error", (req, res) =>
+  AWSXRay.captureAsyncFunc('/throw_error', async subSegment => {
+    return functionThatRejects()
+    .then(handleResp(subSegment, res))
+    .catch(handleError(subSegment, req, res))
+  }));
+
+app.use(xrayExpress.closeSegment());
+
+const server = awsServerlessExpress.createServer(app)
 
 module.exports.handler = async ( event, context) => {
-  const segment = AWSXRay.getSegment();
-  return AWSXRay.captureAsyncFunc('handler', async subSegment => {
-    const log = logger.child({
-      requestId: context.awsRequestId,
-    });
-    subSegment.addMetadata("a", "b");
-    
-    if(event.path === "/health_check" && event.httpMethod === "GET") {
-      return functionThatResolves()
-        .then(handleResp(segment))
-        .catch(error => handleError(log, error))
-    } else if(event.path === "/send_data" && event.httpMethod === "GET") {
-      return getUsers(dynamodb)
-        .then(results => sendUsers(results, sns))
-        .then(handleResp(subSegment))
-        .catch(handleError(subSegment, log))
-    } else if(event.path === "/send_data_rds" && event.httpMethod === "GET") {
-      return getUsersRDS(db)
-        .then(results => sendUsers(results, sns))
-        .then(handleResp(subSegment))
-        .catch(handleError(subSegment, log))
-    } else if (event.path === "/respond_400" && event.httpMethod === "POST") {
-      return functionThatRejectsWith400()
-        .then(handleResp(subSegment))
-        .catch(handleError(subSegment, log))
-    } else if(event.path === "/throw_error" && event.httpMethod === "GET") {
-      return functionThatRejects()
-        .then(handleResp(subSegment))
-        .catch(handleError(subSegment, log))
-    } else {
-      return handleError(subSegment, log)(new ApiError(404, "404 Not Found"));
+  try {
+    const result =  await awsServerlessExpress.proxy(server, event, context, "PROMISE").promise 
+    if( result.statusCode > 499 ) {
+      return Promise.reject(result);
     }
-  }, segment);
+    return result;
+  } catch(err) {
+    return Promise.reject(err);
+  }
 }
