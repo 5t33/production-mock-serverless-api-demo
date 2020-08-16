@@ -65,11 +65,7 @@ const server = awsServerlessExpress.createServer(app)
 
 module.exports.handler = async ( event, context) => {
   try {
-    const result =  await awsServerlessExpress.proxy(server, event, context, "PROMISE").promise 
-    if( result.statusCode > 499 ) {
-      return Promise.reject(result);
-    }
-    return result;
+    return await awsServerlessExpress.proxy(server, event, context, "PROMISE").promise 
   } catch(err) {
     return Promise.reject(err);
   }
