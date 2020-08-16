@@ -17,7 +17,6 @@ app.use(xrayExpress.openSegment('handler'));
 app.use(awsServerlessExpressMiddleware.eventContext())
 
 app.use((req, res, next) => {
-  console.log(req.apiGateway.context)
   req.logger =  logger.child({
     requestId: req.apiGateway.context.awsRequestId,
     traceId: process.env._X_AMZN_TRACE_ID
