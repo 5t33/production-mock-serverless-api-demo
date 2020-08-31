@@ -1,4 +1,4 @@
-const AWSXRay = require('aws-xray-sdk-core');
+const AWSXRay = require('../../common/AWSXRay');
 AWSXRay.captureHTTPsGlobal(require('http'));
 AWSXRay.captureHTTPsGlobal(require('https'));
 const axios = require('axios')

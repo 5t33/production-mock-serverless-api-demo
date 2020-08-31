@@ -1,5 +1,4 @@
-const AWSXRay = require('aws-xray-sdk-core');
-const xrayExpress = require('aws-xray-sdk-express');
+const AWSXRay = require('../../common/AWSXRay');
 const express = require("express");
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
@@ -11,8 +10,6 @@ const { handleError, handleResp, ApiError } = require('../../common/utils');
 const { functionThatRejects, getUsers, getUsersRDS, sendUsers, functionThatRejectsWith400 } = require('./anotherFile');
 const logger = Logger("trace");
 const { db } = require('../../common/rds');
-
-app.use(xrayExpress.openSegment('handler'));
 
 app.use(awsServerlessExpressMiddleware.eventContext())
 
@@ -60,14 +57,13 @@ app.get("/throw_error", (req, res) =>
     .catch(handleError(subSegment, req, res))
   }));
 
-app.use(xrayExpress.closeSegment());
-
 const server = awsServerlessExpress.createServer(app)
 
 module.exports.handler = async ( event, context) => {
-  try {
-    return await awsServerlessExpress.proxy(server, event, context, "PROMISE").promise 
-  } catch(err) {
-    return Promise.reject(err);
-  }
+  const segment = AWSXRay.getSegment();
+  return AWSXRay.captureAsyncFunc('/handler', async (subSegment) => {
+    const response = awsServerlessExpress.proxy(server, event, context, "PROMISE").promise
+    subSegment.close();
+    return response;
+  }, segment);
 }

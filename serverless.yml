@@ -28,12 +28,14 @@ custom:
             sources: [./src/data/fakeUsers.json]
   serverless-offline-ssm:
     stages:
-      - local
+      - 
+        local
     ssm:
       '/demo/local/rds/demo-db-endpoint': 'localhost'
       '/demo/local/rds/demo-db-name': 'test'
       '/demo/local/rds/demo-db-username': 'notadmin'
       '/demo/local/rds/demo-db-password': 'notpassword'
+      '/demo/local/vpc/vpc_endpoint_sns_sg': 'vpc_endpoint_sns_s'
       '/demo/local/vpc/private_subnet_a': 'private_subnet_a'
       '/demo/local/vpc/private_subnet_b': 'private_subnet_b'
       '/demo/local/lambda_security_group': 'lambda_security_group'

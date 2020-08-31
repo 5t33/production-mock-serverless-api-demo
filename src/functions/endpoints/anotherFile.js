@@ -1,4 +1,4 @@
-const AWSXRay = require('aws-xray-sdk-core')
+const AWSXRay = require('../../common/AWSXRay');
 const config = require('config');
 const { ApiError } = require('../../common/utils');
 

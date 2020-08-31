@@ -4,8 +4,8 @@
   "description": "",
   "main": "handler.js",
   "scripts": {
-    "sls-offline-dev": "nodemon --watch src --exec _X_AMZN_TRACE_ID=\"Root=mock\" NODE_ENV=dev sls offline --stage dev",
-    "sls-offline-local": "nodemon --watch src --exec _X_AMZN_TRACE_ID=\"Root=mock\" sls offline --stage local",
+    "sls-offline-dev": "nodemon --watch src --exec AWS_XRAY_CONTEXT_MISSING=LOG_ERROR NODE_ENV=dev sls offline --stage dev",
+    "sls-offline-local": "nodemon --watch src --exec AWS_XRAY_CONTEXT_MISSING=LOG_ERROR NODE_ENV=dev sls offline --stage local",
     "seed-dynamo-dev": "SLS_DEBUG=* sls dynamodb --stage dev seed --seed=DemoTable --online --region us-east-2",
     "seed-dynamo-local": "SLS_DEBUG=* sls dynamodb --stage local seed --seed=DemoTable --region us-east-2",
     "migrate-dynamo-local": "SLS_DEBUG=* sls dynamodb --stage local migrate --region us-east-2",
