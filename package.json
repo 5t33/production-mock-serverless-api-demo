@@ -35,7 +35,7 @@
   "devDependencies": {
     "nodemon": "^2.0.4",
     "serverless-dotenv-plugin": "^2.4.2",
-    "serverless-dynamodb-local": "^0.2.39",
+    "serverless-dynamodb-local": "^1.0.2",
     "serverless-offline": "^6.5.0",
     "serverless-offline-ssm": "^5.0.1",
     "serverless-pseudo-parameters": "^2.5.0"
